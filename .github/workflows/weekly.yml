@@ -3,7 +3,11 @@ name: Weekly HFR monitor
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 7 * * 1"   # lundi 07:00 UTC (donc ~08:00 à Paris l’hiver)
+    - cron: "0 7 * * 1"   # Lundi 08:00 (heure de Paris en hiver)
+
+# TRÈS IMPORTANT : Permettre au robot d'écrire le fichier state.json dans le dépôt
+permissions:
+  contents: write
 
 jobs:
   run:
@@ -31,17 +35,15 @@ jobs:
         run: |
           python monitor.py
 
-      - name: Save state
+      - name: Persist state.json
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add state.json || true
-          git commit -m "Update state" || true
-          git push || true
-- name: Persist state.json
-  run: |
-    git config user.name "github-actions"
-    git config user.email "github-actions@github.com"
-    git add state.json || true
-    git commit -m "Update HFR monitor state" || true
-    git push || true
+          # On vérifie si le fichier a changé avant de valider
+          git add state.json
+          if git diff --staged --quiet; then
+            echo "Pas de nouveaux messages, rien à sauvegarder."
+          else
+            git commit -m "Update HFR monitor state [skip ci]"
+            git push
+          fi
