@@ -1,49 +1,19 @@
-name: Weekly HFR monitor
+- name: Persist state.json
+  run: |
+    git config user.name "github-actions"
+    git config user.email "github-actions@github.com"
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 7 * * 1"   # Lundi 08:00 (heure de Paris en hiver)
+    if [ ! -f state.json ]; then
+      echo "state.json absent : rien à sauvegarder."
+      exit 0
+    fi
 
-# TRÈS IMPORTANT : Permettre au robot d'écrire le fichier state.json dans le dépôt
-permissions:
-  contents: write
+    git add state.json
 
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    if git diff --staged --quiet; then
+      echo "state.json inchangé : rien à sauvegarder."
+      exit 0
+    fi
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests beautifulsoup4
-
-      - name: Run monitor
-        env:
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
-          MAIL_TO:   ${{ secrets.MAIL_TO }}
-          MAIL_FROM: ${{ secrets.MAIL_FROM }}
-        run: |
-          python monitor.py
-
-      - name: Persist state.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          # On vérifie si le fichier a changé avant de valider
-          git add state.json
-          if git diff --staged --quiet; then
-            echo "Pas de nouveaux messages, rien à sauvegarder."
-          else
-            git commit -m "Update HFR monitor state [skip ci]"
-            git push
-          fi
+    git commit -m "Update HFR monitor state [skip ci]"
+    git push
