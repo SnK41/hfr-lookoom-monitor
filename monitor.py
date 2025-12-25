@@ -86,11 +86,3 @@ def main():
 if __name__ == "__main__":
     import os
     main()
-          - name: Persist state.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add state.json || true
-          git commit -m "Update HFR monitor state" || true
-          git push || true
-
