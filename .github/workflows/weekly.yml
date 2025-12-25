@@ -38,3 +38,10 @@ jobs:
           git add state.json || true
           git commit -m "Update state" || true
           git push || true
+- name: Persist state.json
+  run: |
+    git config user.name "github-actions"
+    git config user.email "github-actions@github.com"
+    git add state.json || true
+    git commit -m "Update HFR monitor state" || true
+    git push || true
